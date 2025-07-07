@@ -1,0 +1,9 @@
+1. Environment Setup
+2. Docker and Docker-compose setup
+3. Django
+
+4. MongoDB setup and add data
+
+5. Django connect with MongoDB
+6. Routing and Template
+7. Testing
