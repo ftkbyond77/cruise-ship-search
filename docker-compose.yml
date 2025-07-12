@@ -13,6 +13,8 @@ services:
       - mongodb
     environment:
       - DEBUG=1
+    env_file:
+      - .env
 
   mongodb:
     image: mongo:6
