@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ person.full_name }}{% endblock %}
+
+{% block content %}
+  <h2>{{ person.full_name }}</h2>
+  <ul>
+    <li><strong>Crew ID:</strong> {{ person.crew_id_number }}</li>
+    <li><strong>Passport:</strong> {{ person.passport_number }}</li>
+    <li><strong>Birth Date:</strong> {{ person.birth_date|date:"Y-m-d" }}</li>
+    <li><strong>Gender:</strong> {{ person.gender }}</li>
+    <li><strong>Nationality:</strong> {{ person.nationality }}</li>
+    <li><strong>Position:</strong> {{ person.position }}</li>
+    <li><strong>Address (PH):</strong> {{ person.address_philippines }}</li>
+    <li><strong>Address (USA):</strong> {{ person.address_usa }}</li>
+    <li><strong>CBP Permit Expire:</strong> {{ person.cbp_permit_expire|date:"Y-m-d" }}</li>
+  </ul>
+
+  <h3>ภาพเอกสาร</h3>
+  {% for image in person.images %}
+    <div>
+      <strong>{{ image.type }}</strong><br>
+      <img src="/media/{{ image.path }}" alt="{{ image.type }}">
+    </div>
+  {% empty %}
+    <p>ไม่มีรูปภาพ</p>
+  {% endfor %}
+{% endblock %}

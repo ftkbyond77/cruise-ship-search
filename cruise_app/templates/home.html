@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Crew List{% endblock %}
+
+{% block content %}
+  <h2>รายชื่อทั้งหมด</h2>
+  <ul>
+    {% for person in persons %}
+      <li>
+        <a href="{% url 'person_detail' crew_id=person.crew_id_number %}">
+          {{ person.full_name }} ({{ person.crew_id_number }})
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
