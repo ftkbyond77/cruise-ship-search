@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Delete Image{% endblock %}
+
+{% block content %}
+  <h2>Confirm Delete Image</h2>
+  <p>Are you sure you want to delete the ID Card image for {{ image.person.crew_id_number }} uploaded at {{ image.uploaded_at|date:"Y-m-d H:i:s" }}?</p>
+  <img src="{{ image.image.url }}" alt="Image" width="200">
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    <a href="{% url 'person_detail' image.person.crew_id_number %}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

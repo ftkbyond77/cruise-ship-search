@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Update Image{% endblock %}
+
+{% block content %}
+  <h2>Update ID Card Image for {{ image.person.crew_id_number }}</h2>
+  <p>Current Image (Uploaded at: {{ image.uploaded_at|date:"Y-m-d H:i:s" }})</p>
+  <img src="{{ image.image.url }}" alt="Current Image" width="200">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+      <label for="image">Select new image:</label>
+      <input type="file" id="image" name="image" accept="image/*" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Update Image</button>
+    <a href="{% url 'person_detail' image.person.crew_id_number %}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}
