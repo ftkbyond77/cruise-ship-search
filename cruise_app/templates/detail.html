@@ -15,13 +15,13 @@
     <li><strong>CBP Permit Expire:</strong> {{ person.cbp_permit_expire|date:"Y-m-d" }}</li>
   </ul>
 
-  <h3>ภาพเอกสาร</h3>
-  {% for image in person.images %}
-    <div>
-      <strong>{{ image.type }}</strong><br>
-      <img src="/media/{{ image.path }}" alt="{{ image.type }}">
-    </div>
-  {% empty %}
-    <p>ไม่มีรูปภาพ</p>
-  {% endfor %}
+<h3>ภาพจากหลังบ้าน</h3>
+{% for image in images %}
+  <div>
+    <img src="{{ image.image.url }}" alt="รูปของ {{ image.crew_id_number }}" width="300">
+  </div>
+  <p>อัปโหลดเมื่อ: {{ image.uploaded_at }}</p>
+{% empty %}
+  <p>ยังไม่มีภาพอัปโหลด</p>
+{% endfor %}
 {% endblock %}
