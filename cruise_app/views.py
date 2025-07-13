@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from .mongo.mongo import db  
+from django.shortcuts import redirect
+
 
 def person_list(request):
     persons = list(db.persons.find())
@@ -8,3 +10,6 @@ def person_list(request):
 def person_detail(request, crew_id):
     person = db.persons.find_one({"crew_id_number": crew_id})
     return render(request, 'person_detail.html', {'person': person})
+
+def home_redirect(request):
+    return redirect('person_list')
