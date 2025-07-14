@@ -37,7 +37,7 @@ class CrewImage(models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
     image_type = models.CharField(max_length=50, default='ID_CARD_FRONT')
     image = models.ImageField(upload_to='idcards/')
-    uploaded_at = models.DateTimeField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.person.crew_id_number if self.person else 'No Person'} - {self.image_type}"
