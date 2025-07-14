@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 import logging
 from datetime import datetime
+from .mongo.mongo import db
 
 logger = logging.getLogger(__name__)
 
@@ -46,3 +47,13 @@ def delete_image(request, image_id):
         messages.success(request, 'Image deleted successfully.')
         return redirect('person_detail', crew_id=crew_id)
     return render(request, 'delete_image.html', {'image': image})
+
+# debug testing
+from django.http import HttpResponse
+import pprint
+
+def test_mongo(request):
+    persons = list(db.persons.find())
+    out = f"Total persons: {len(persons)}\n\n"
+    out += "\n".join([pprint.pformat(p) for p in persons])
+    return HttpResponse(f"<pre>{out}</pre>")
