@@ -210,3 +210,5 @@ __marimo__/
 *.jpg
 *.jpeg
 *.png
+
+mongo_data/
