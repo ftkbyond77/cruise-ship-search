@@ -3,41 +3,49 @@ from django.contrib import messages
 from cruise_app.models import Person, CrewImage
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import authenticate, login
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 import logging
 from datetime import datetime
 from .mongo.mongo import db
-from bson.objectid import ObjectId
+import pprint
 
 logger = logging.getLogger(__name__)
 
-# debug testing section
-from django.http import HttpResponse
-import pprint
-
+# Debug testing section
 def test_mongo(request):
     persons = list(db.persons.find())
     out = f"Total persons: {len(persons)}\n\n"
     out += "\n".join([pprint.pformat(p) for p in persons])
     return HttpResponse(f"<pre>{out}</pre>")
 
+
+from django.contrib.auth.views import LoginView
+
+class SupervisorLoginView(LoginView):
+    template_name = 'login.html'
+
+    def form_valid(self, form):
+        user = form.get_user()
+        if not user.is_staff:
+            messages.error(self.request, "Access denied. Only supervisors can log in.")
+            return redirect('login')
+        return super().form_valid(form)
+
+@login_required
 def home(request):
     persons = list(db.persons.find())  
     return render(request, 'home.html', {'persons': persons})
 
-# def person_detail(request, crew_id):
-#     logger.debug(f"Fetching person with crew_id: {crew_id}")
-#     person = get_object_or_404(Person, crew_id_number=crew_id)
-#     id_card_images = person.images.filter(image_type='ID_CARD_FRONT')
-#     logger.debug(f"Found {id_card_images.count()} ID_CARD_FRONT images for crew_id: {crew_id}")
-#     return render(request, 'detail.html', {'person': person, 'id_card_images': id_card_images})
-
+@login_required
 def person_detail(request, crew_id):
     person = db.persons.find_one({"crew_id_number": crew_id})
 
     if not person:
         return render(request, '404.html', status=404)
 
-    # ดึงเฉพาะภาพที่ type = ID_CARD_FRONT
     id_card_images = [
         img for img in person.get("images", [])
         if img.get("type") == "ID_CARD_FRONT"

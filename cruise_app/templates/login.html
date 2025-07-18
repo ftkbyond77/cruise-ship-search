@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor Login - Juneau Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .mountain-bg {
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #000000 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #000000 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mountain-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                polygon(0% 100%, 15% 60%, 25% 80%, 35% 45%, 50% 70%, 65% 30%, 80% 60%, 100% 40%, 100% 100%) 
+                no-repeat center/cover;
+            background-color: rgba(255, 255, 255, 0.05);
+            clip-path: polygon(0% 100%, 15% 60%, 25% 80%, 35% 45%, 50% 70%, 65% 30%, 80% 60%, 100% 40%, 100% 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-glow:focus {
+            box-shadow: 
+                0 0 0 3px rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .aurora-effect {
+            background: linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                transparent 25%,
+                transparent 75%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            background-size: 200% 200%;
+            animation: aurora 3s ease-in-out infinite;
+        }
+        
+        @keyframes aurora {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%);
+            color: #000000;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .error-glow {
+            animation: errorPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes errorPulse {
+            0%, 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        }
+        
+        .juneau-title {
+            background: linear-gradient(135deg, #ffffff 0%, #d1d5db 50%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="mountain-bg">
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function LoginForm() {
+            const [formData, setFormData] = useState({
+                username: '',
+                password: ''
+            });
+            const [errors, setErrors] = useState(window.djangoFormErrors || false);
+            const [isLoading, setIsLoading] = useState(false);
+            const [mounted, setMounted] = useState(false);
+            
+            useEffect(() => {
+                setMounted(true);
+            }, []);
+            
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: value
+                }));
+                if (errors) setErrors(false);
+            };
+            
+            const handleSubmit = (e) => {
+                // Don't prevent default - let Django handle the form submission
+                setIsLoading(true);
+            };
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className="aurora-effect absolute inset-0 pointer-events-none"></div>
+                    
+                    <div className={`w-full max-w-md relative z-10 ${mounted ? 'fade-in' : ''}`}>
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <div className="mb-4">
+                                <svg className="w-16 h-16 mx-auto text-white opacity-90" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 2L3 7v11a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V7l-7-5z" clipRule="evenodd"/>
+                                </svg>
+                            </div>
+                            <h1 className="juneau-title text-4xl font-bold mb-2">
+                                Juneau Portal
+                            </h1>
+                            <p className="text-gray-300 text-lg font-light">
+                                Supervisor Access
+                            </p>
+                            <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-white to-transparent mx-auto mt-4 opacity-60"></div>
+                        </div>
+                        
+                        {/* Login Form */}
+                        <div className={`glass-effect rounded-2xl p-8 ${errors ? 'error-glow' : ''}`}>
+                            {errors && (
+                                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                    <div className="flex items-center">
+                                        <svg className="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                                        </svg>
+                                        <p className="text-red-400 font-medium">
+                                            Username or password is incorrect
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <form onSubmit={handleSubmit} method="post" action="{% url 'login' %}" className="space-y-6">
+                                {/* Django CSRF Token - you'll need to add this */}
+                                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+                                <input type="hidden" name="next" value="{% url 'home' %}" />
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                        Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleInputChange}
+                                        className="input-glow w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/40 transition-all duration-300"
+                                        placeholder="Enter your username"
+                                        required
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                        Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        className="input-glow w-full px-4 py-3 bg-black/20 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/40 transition-all duration-300"
+                                        placeholder="Enter your password"
+                                        required
+                                    />
+                                </div>
+                                
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="btn-primary w-full py-4 px-6 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                                >
+                                    {isLoading ? (
+                                        <span className="flex items-center justify-center">
+                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Authenticating...
+                                        </span>
+                                    ) : (
+                                        'Access Portal'
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="text-center mt-8">
+                            <p className="text-gray-400 text-sm">
+                                Secured by Juneau Digital Infrastructure
+                            </p>
+                            <div className="flex items-center justify-center mt-4 space-x-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-gray-500">System Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<LoginForm />, document.getElementById('root'));
+    </script>
+</body>
+</html>
