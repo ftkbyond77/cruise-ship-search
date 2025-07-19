@@ -1,34 +1,333 @@
-{% extends 'base.html' %}
-{% block title %}{{ person.full_name|default:"Person Details" }}{% endblock %}
-
-{% block content %}
-  {% if error %}
-    <p style="color: red;">{{ error }}</p>
-  {% else %}
-    <h2>{{ person.full_name }}</h2>
-    <ul>
-      <li><strong>Crew ID:</strong> {{ person.crew_id_number }}</li>
-      <li><strong>Passport:</strong> {{ person.passport_number }}</li>
-      <li><strong>Birth Date:</strong> {{ person.birth_date|date:"Y-m-d" }}</li>
-      <li><strong>Gender:</strong> {{ person.gender }}</li>
-      <li><strong>Nationality:</strong> {{ person.nationality }}</li>
-      <li><strong>Position:</strong> {{ person.position }}</li>
-      <li><strong>Address (PH):</strong> {{ person.address_philippines }}</li>
-      <li><strong>Address (USA):</strong> {{ person.address_usa }}</li>
-      <li><strong>CBP Permit Expire:</strong> {{ person.cbp_permit_expire|date:"Y-m-d" }}</li>
-    </ul>
-
-    <h3>ภาพจาก MongoDB (ID Card Front)</h3>
-    {% for image in person.images %}
-      {% if image.type == "ID_CARD_FRONT" %}
-        <div style="margin-bottom: 20px;">
-          <img src="/media/{{ image.path }}" alt="ID Card of {{ person.crew_id_number }}" width="300"
-               style="border: 1px solid #ddd; border-radius: 4px;">
-          <p>อัปโหลดเมื่อ: {{ image.uploaded_at|date:"Y-m-d H:i:s" }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ person.full_name|default:"Person Details" }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'mono': ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen font-sans">
+    <!-- Professional Header -->
+    <header class="bg-black/40 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-40">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="javascript:history.back()" class="text-slate-300 hover:text-white transition-colors duration-300 flex items-center space-x-3 bg-slate-800/30 px-4 py-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span class="font-medium">Back to Registry</span>
+                </a>
+                <div class="text-center">
+                    <h1 class="text-xl font-semibold text-white">Maritime Personnel Database</h1>
+                    <p class="text-slate-400 text-sm">Individual Record View</p>
+                </div>
+                <div class="w-32"></div>
+            </div>
         </div>
-      {% endif %}
-    {% empty %}
-      <p>ยังไม่มีภาพ ID Card อัปโหลด</p>
-    {% endfor %}
-  {% endif %}
-{% endblock %}
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        {% if error %}
+            <!-- Error Display -->
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-red-950/30 backdrop-blur-sm rounded-lg p-8 border border-red-800/30">
+                    <div class="font-mono text-red-300">
+                        <div class="text-sm text-red-400 mb-2">ERROR_RESPONSE:</div>
+                        <div class="text-lg">{</div>
+                        <div class="ml-4 text-red-200">"status": "error",</div>
+                        <div class="ml-4 text-red-200">"message": "{{ error }}",</div>
+                        <div class="ml-4 text-red-200">"timestamp": "{{ "now"|date:"c" }}"</div>
+                        <div class="text-lg">}</div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Personnel Record -->
+            <div class="max-w-6xl mx-auto">
+                <!-- Header Record Info -->
+                <div class="mb-8 bg-slate-800/30 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h1 class="text-2xl font-semibold text-white mb-2">{{ person.full_name }}</h1>
+                            <div class="flex space-x-4 text-sm">
+                                <span class="bg-blue-600/20 text-blue-300 px-3 py-1 rounded border border-blue-500/30">
+                                    ID: {{ person.crew_id_number }}
+                                </span>
+                                <span class="bg-green-600/20 text-green-300 px-3 py-1 rounded border border-green-500/30">
+                                    {{ person.position }}
+                                </span>
+                                <span class="bg-purple-600/20 text-purple-300 px-3 py-1 rounded border border-purple-500/30">
+                                    {{ person.nationality }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right text-slate-400 text-sm">
+                            <div>Record Type: CREW_PERSONNEL</div>
+                            <div>Last Updated: {{ "now"|date:"Y-m-d H:i:s" }} UTC</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid gap-8 lg:grid-cols-2">
+                    <!-- Personal Information JSON -->
+                    <div class="bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-white">Personal Information</h2>
+                            <span class="text-xs text-slate-400 font-mono bg-slate-700/30 px-2 py-1 rounded">OBJECT</span>
+                        </div>
+                        
+                        <div class="font-mono text-sm bg-slate-900/50 rounded-lg p-4 border border-slate-600/30 overflow-x-auto">
+<pre class="text-slate-200">{
+  <span class="text-blue-300">"crew_id_number"</span>: <span class="text-green-300">"{{ person.crew_id_number }}"</span>,
+  <span class="text-blue-300">"full_name"</span>: <span class="text-green-300">"{{ person.full_name }}"</span>,
+  <span class="text-blue-300">"passport_number"</span>: <span class="text-green-300">"{{ person.passport_number }}"</span>,
+  <span class="text-blue-300">"birth_date"</span>: <span class="text-green-300">"{{ person.birth_date|date:"Y-m-d" }}"</span>,
+  <span class="text-blue-300">"gender"</span>: <span class="text-green-300">"{{ person.gender }}"</span>,
+  <span class="text-blue-300">"nationality"</span>: <span class="text-green-300">"{{ person.nationality }}"</span>,
+  <span class="text-blue-300">"position"</span>: <span class="text-green-300">"{{ person.position }}"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Address Information JSON -->
+                    <div class="bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-white">Address Information</h2>
+                            <span class="text-xs text-slate-400 font-mono bg-slate-700/30 px-2 py-1 rounded">OBJECT</span>
+                        </div>
+                        
+                        <div class="font-mono text-sm bg-slate-900/50 rounded-lg p-4 border border-slate-600/30 overflow-x-auto">
+<pre class="text-slate-200">{
+  <span class="text-blue-300">"addresses"</span>: {
+    <span class="text-blue-300">"philippines"</span>: <span class="text-green-300">"{{ person.address_philippines|default:"null" }}"</span>,
+    <span class="text-blue-300">"usa"</span>: <span class="text-green-300">"{{ person.address_usa|default:"null" }}"</span>
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Documentation JSON -->
+                    <div class="bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-white">Documentation</h2>
+                            <span class="text-xs text-slate-400 font-mono bg-slate-700/30 px-2 py-1 rounded">OBJECT</span>
+                        </div>
+                        
+                        <div class="font-mono text-sm bg-slate-900/50 rounded-lg p-4 border border-slate-600/30 overflow-x-auto">
+<pre class="text-slate-200">{
+  <span class="text-blue-300">"cbp_permit"</span>: {
+    <span class="text-blue-300">"expire_date"</span>: <span class="text-green-300">"{% if person.cbp_permit_expire %}{{ person.cbp_permit_expire|date:"Y-m-d" }}{% else %}null{% endif %}"</span>,
+    <span class="text-blue-300">"status"</span>: <span class="text-{% if person.cbp_permit_expire %}{% now "Y-m-d" as today %}{% if person.cbp_permit_expire|date:"Y-m-d" > today %}green{% else %}red{% endif %}{% else %}yellow{% endif %}-300">"{% if person.cbp_permit_expire %}{% now "Y-m-d" as today %}{% if person.cbp_permit_expire|date:"Y-m-d" > today %}valid{% else %}expired{% endif %}{% else %}unknown{% endif %}"</span>
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Image Assets JSON -->
+                    <div class="bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-white">Image Assets</h2>
+                            <span class="text-xs text-slate-400 font-mono bg-slate-700/30 px-2 py-1 rounded">ARRAY</span>
+                        </div>
+                        
+                        <div class="font-mono text-sm bg-slate-900/50 rounded-lg p-4 border border-slate-600/30 overflow-x-auto">
+<pre class="text-slate-200">{
+  <span class="text-blue-300">"images"</span>: [
+    {% for image in person.images %}{% if image.type == "ID_CARD_FRONT" %}{
+      <span class="text-blue-300">"type"</span>: <span class="text-green-300">"{{ image.type }}"</span>,
+      <span class="text-blue-300">"path"</span>: <span class="text-green-300">"{{ image.path }}"</span>,
+      <span class="text-blue-300">"uploaded_at"</span>: <span class="text-green-300">"{{ image.uploaded_at|date:"c" }}"</span>
+    }{% if not forloop.last %},{% endif %}{% endif %}{% empty %}
+    <span class="text-yellow-300">// No images available</span>{% endfor %}
+  ]
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Display Section -->
+                {% for image in person.images %}
+                    {% if image.type == "ID_CARD_FRONT" %}
+                        <div class="mt-8 bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold text-white">Document Preview</h2>
+                                <div class="text-sm text-slate-400">
+                                    <span class="font-mono bg-slate-700/30 px-2 py-1 rounded mr-2">{{ image.type }}</span>
+                                    <span>{{ image.uploaded_at|date:"Y-m-d H:i:s" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-slate-900/30 rounded-lg p-6 border border-slate-600/30">
+                                <div class="text-center">
+                                    <div class="inline-block bg-white/5 rounded-lg p-4 border border-slate-600/30">
+                                        <img src="/media/{{ image.path }}" 
+                                             alt="ID Card - {{ person.crew_id_number }}" 
+                                             class="max-w-full h-auto rounded shadow-2xl cursor-pointer hover:scale-105 transition-transform duration-300"
+                                             style="max-width: 500px; max-height: 400px;">
+                                    </div>
+                                    <div class="mt-4 text-slate-400 text-sm font-mono">
+                                        Asset Path: /media/{{ image.path }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="mt-8 bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                        <div class="text-center py-12">
+                            <div class="font-mono text-slate-400 text-lg mb-4">
+                                {<br>
+                                &nbsp;&nbsp;"images": [],<br>
+                                &nbsp;&nbsp;"status": "no_assets_found"<br>
+                                }
+                            </div>
+                            <p class="text-slate-500">No document images available in database</p>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- API Response Summary -->
+                <div class="mt-8 bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-white">API Response Summary</h2>
+                        <span class="text-xs text-slate-400 font-mono bg-slate-700/30 px-2 py-1 rounded">META</span>
+                    </div>
+                    
+                    <div class="font-mono text-sm bg-slate-900/50 rounded-lg p-4 border border-slate-600/30 overflow-x-auto">
+<pre class="text-slate-200">{
+  <span class="text-blue-300">"status"</span>: <span class="text-green-300">"success"</span>,
+  <span class="text-blue-300">"record_id"</span>: <span class="text-green-300">"{{ person.crew_id_number }}"</span>,
+  <span class="text-blue-300">"data_source"</span>: <span class="text-green-300">"mongodb_atlas"</span>,
+  <span class="text-blue-300">"query_time"</span>: <span class="text-green-300">"{{ "now"|date:"c" }}"</span>,
+  <span class="text-blue-300">"image_count"</span>: <span class="text-orange-300">{{ person.images|length }}</span>,
+  <span class="text-blue-300">"record_complete"</span>: <span class="text-{% if person.full_name and person.crew_id_number and person.position %}green{% else %}yellow{% endif %}-300">{% if person.full_name and person.crew_id_number and person.position %}true{% else %}false{% endif %}</span>
+}</pre>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </main>
+
+    <!-- Professional Footer -->
+    <footer class="mt-16 bg-black/20 backdrop-blur-sm border-t border-slate-700/50 py-6">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-between items-center text-slate-400 text-sm">
+                <div>Maritime Personnel Database System</div>
+                <div class="font-mono">Build: {{ "now"|date:"Y.m.d" }}</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Professional image modal
+            const images = document.querySelectorAll('img[alt*="ID Card"]');
+            images.forEach(img => {
+                img.addEventListener('click', function() {
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-6';
+                    modal.style.animation = 'fadeIn 0.2s ease';
+                    
+                    const container = document.createElement('div');
+                    container.className = 'bg-slate-800 rounded-lg p-6 max-w-4xl w-full';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'flex justify-between items-center mb-4 pb-4 border-b border-slate-600';
+                    header.innerHTML = `
+                        <h3 class="text-white font-semibold">Document Preview</h3>
+                        <button class="text-slate-400 hover:text-white text-xl">&times;</button>
+                    `;
+                    
+                    const modalImg = document.createElement('img');
+                    modalImg.src = this.src;
+                    modalImg.className = 'w-full h-auto rounded border border-slate-600';
+                    
+                    container.appendChild(header);
+                    container.appendChild(modalImg);
+                    modal.appendChild(container);
+                    document.body.appendChild(modal);
+                    
+                    // Close handlers
+                    const closeBtn = header.querySelector('button');
+                    const closeModal = () => {
+                        modal.style.animation = 'fadeOut 0.2s ease';
+                        setTimeout(() => document.body.removeChild(modal), 200);
+                    };
+                    
+                    closeBtn.addEventListener('click', closeModal);
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) closeModal();
+                    });
+                });
+            });
+
+            // Copy JSON functionality
+            const codeBlocks = document.querySelectorAll('pre');
+            codeBlocks.forEach(block => {
+                block.addEventListener('dblclick', function() {
+                    navigator.clipboard.writeText(this.textContent).then(() => {
+                        const toast = document.createElement('div');
+                        toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-50';
+                        toast.textContent = 'JSON copied to clipboard';
+                        document.body.appendChild(toast);
+                        setTimeout(() => document.body.removeChild(toast), 2000);
+                    });
+                });
+            });
+        });
+    </script>
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
+        }
+
+        /* JSON syntax highlighting */
+        pre {
+            line-height: 1.5;
+        }
+
+        /* Professional hover effects */
+        .hover\:scale-105:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</body>
+</html>
