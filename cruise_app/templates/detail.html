@@ -1,3 +1,5 @@
+{% load filename_filters %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -197,6 +199,40 @@
                         </div>
                     </div>
                 {% endfor %}
+
+                {% for image in id_card_images %}
+                    <div class="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <!-- Download Button -->
+                        <a href="/media/{{ image.path }}" download 
+                        class="text-sm bg-blue-700 hover:bg-blue-600 text-white font-mono px-4 py-2 rounded shadow transition">
+                            ⬇ Download
+                        </a>
+
+                        {% with image.path|basename as filename %}
+                            <!-- Inline Update Form -->
+                            <form action="{% url 'update_image' filename|urlencode %}" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <input type="file" name="image" accept="image/*" required
+                                    class="text-sm text-white file:bg-slate-700 file:text-white file:px-3 file:py-1 file:rounded file:border-0">
+                                <button type="submit"
+                                        class="bg-yellow-600 hover:bg-yellow-500 text-white font-mono px-4 py-2 rounded shadow transition">
+                                    ✎ Update
+                                </button>
+                            </form>
+
+                            <!-- Inline Delete Form -->
+                            <form action="{% url 'delete_image' filename|urlencode %}" method="post" onsubmit="return confirm('Are you sure?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="text-sm bg-red-700 hover:bg-red-600 text-white font-mono px-4 py-2 rounded shadow transition">
+                                    🗑 Delete
+                                </button>
+                            </form>
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+
+
 
                 <!-- API Response Summary -->
                 <div class="mt-8 bg-slate-800/20 backdrop-blur-sm rounded-lg border border-slate-700/50 p-6">

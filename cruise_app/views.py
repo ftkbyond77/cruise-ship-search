@@ -57,29 +57,28 @@ def person_detail(request, crew_id):
     })
 
 @login_required
-def update_image(request, image_id):
+def update_image(request, image_name):
     if not request.user.is_staff:
         raise PermissionDenied
-    image = get_object_or_404(CrewImage, id=image_id)
+    image = get_object_or_404(CrewImage, image__icontains=image_name)
     if request.method == 'POST':
         if 'image' in request.FILES:
             image.image = request.FILES['image']
             image.uploaded_at = datetime.now()
             image.save()
             messages.success(request, 'Image updated successfully.')
-            return redirect('person_detail', crew_id=image.person.crew_id_number)
         else:
             messages.error(request, 'No image file provided.')
-    return render(request, 'update_image.html', {'image': image})
+        return redirect('person_detail', crew_id=image.person.crew_id_number)
+    return redirect('person_detail', crew_id=image.person.crew_id_number)
 
 @login_required
-def delete_image(request, image_id):
+def delete_image(request, image_name):
     if not request.user.is_staff:
         raise PermissionDenied
-    image = get_object_or_404(CrewImage, id=image_id)
+    image = get_object_or_404(CrewImage, image__icontains=image_name)
+    crew_id = image.person.crew_id_number
     if request.method == 'POST':
-        crew_id = image.person.crew_id_number
         image.delete()
         messages.success(request, 'Image deleted successfully.')
-        return redirect('person_detail', crew_id=crew_id)
-    return render(request, 'delete_image.html', {'image': image})
+    return redirect('person_detail', crew_id=crew_id)

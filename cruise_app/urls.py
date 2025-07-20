@@ -7,7 +7,7 @@ urlpatterns = [
     path('', SupervisorLoginView.as_view(), name='login'),
     path('home/', views.home, name='home'),  
     path('person/<str:crew_id>/', views.person_detail, name='person_detail'),
-    path('image/<str:image_id>/update/', views.update_image, name='update_image'),
-    path('image/<str:image_id>/delete/', views.delete_image, name='delete_image'),
+    path("image/<str:image_name>/update/", views.update_image, name="update_image"),
+    path("image/<str:image_name>/delete/", views.delete_image, name="delete_image"),
     path('debug-mongo/', views.test_mongo, name='mongo_debug'),
 ]
