@@ -21,14 +21,12 @@
     </script>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
-    <!-- Header with Northern Lights Effect -->
+    <!-- Header -->
     <div class="relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 animate-pulse"></div>
         <header class="relative bg-black/30 backdrop-blur-sm border-b border-slate-700/50">
             <div class="container mx-auto px-4 py-6">
-                <h1 class="text-4xl font-bold text-white text-center mb-2">
-                    ❄️ Juneau Crew Registry
-                </h1>
+                <h1 class="text-4xl font-bold text-white text-center mb-2">❄️ Juneau Crew Registry</h1>
                 <p class="text-slate-300 text-center text-lg">Alaska Maritime Personnel Database</p>
             </div>
         </header>
@@ -66,8 +64,14 @@
                 {% for person in persons %}
                 <div class="crew-item bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600/50 hover:border-slate-500 rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl" 
                      data-name="{{ person.full_name|lower }}" 
-                     data-id="{{ person.crew_id_number|lower }}">
-                    <a href="{% url 'person_detail' crew_id=person.crew_id_number %}" class="block">
+                     data-id="{{ person.crew_id|lower }}">
+                     
+                    {% if person.crew_id %}
+                    <a href="{% url 'person_detail' crew_id=person.crew_id %}" class="block">
+                    {% else %}
+                    <div class="block cursor-not-allowed opacity-50">
+                    {% endif %}
+
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -75,7 +79,7 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h3 class="text-white font-semibold text-xl mb-1">{{ person.full_name }}</h3>
-                                    <p class="text-slate-400 text-base">Crew ID: {{ person.crew_id_number }}</p>
+                                    <p class="text-slate-400 text-base">Crew ID: {{ person.crew_id }}</p>
                                 </div>
                             </div>
                             <div class="text-slate-400 opacity-50">
@@ -84,7 +88,12 @@
                                 </svg>
                             </div>
                         </div>
+
+                    {% if person.crew_id %}
                     </a>
+                    {% else %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -122,7 +131,6 @@
             const noResults = document.getElementById('noResults');
             let searchTimeout;
 
-            // Add search functionality with debouncing
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
@@ -143,28 +151,19 @@
                         }
                     });
 
-                    // Show/hide no results message
-                    if (visibleCount === 0 && searchTerm !== '') {
-                        noResults.classList.remove('hidden');
-                    } else {
-                        noResults.classList.add('hidden');
-                    }
+                    noResults.classList.toggle('hidden', visibleCount !== 0 || searchTerm === '');
                 }, 300);
             });
 
-            // Add floating animation to search bar
             const searchContainer = document.querySelector('.relative.max-w-2xl');
             let animationFrame;
-            
             function floatAnimation() {
                 const time = Date.now() * 0.001;
                 searchContainer.style.transform = `translateY(${Math.sin(time) * 3}px)`;
                 animationFrame = requestAnimationFrame(floatAnimation);
             }
-            
             floatAnimation();
 
-            // Add keyboard shortcuts
             document.addEventListener('keydown', function(e) {
                 if (e.key === '/' && e.target !== searchInput) {
                     e.preventDefault();
@@ -177,7 +176,6 @@
                 }
             });
 
-            // Add subtle parallax effect
             window.addEventListener('scroll', function() {
                 const scrolled = window.pageYOffset;
                 const header = document.querySelector('header');
@@ -187,40 +185,30 @@
     </script>
 
     <style>
-        /* Custom scrollbar for Alaska theme */
         ::-webkit-scrollbar {
             width: 8px;
         }
-        
         ::-webkit-scrollbar-track {
             background: rgba(30, 41, 59, 0.5);
         }
-        
         ::-webkit-scrollbar-thumb {
             background: rgba(148, 163, 184, 0.5);
             border-radius: 4px;
         }
-        
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(148, 163, 184, 0.7);
         }
-
-        /* Smooth animations */
         * {
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        
         .crew-item:hover {
             animation: shimmer 1s ease-in-out;
         }
-        
         @keyframes shimmer {
             0% { box-shadow: 0 0 0px rgba(59, 130, 246, 0.5); }
             50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
             100% { box-shadow: 0 0 0px rgba(59, 130, 246, 0.5); }
         }
-        
-        /* Arctic glow effect */
         .bg-white\/10 {
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }

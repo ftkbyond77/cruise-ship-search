@@ -36,25 +36,51 @@ class SupervisorLoginView(LoginView):
 
 @login_required
 def home(request):
-    persons = list(db.persons.find())  
+    raw_persons = list(db.persons.find())
+
+    persons = []
+    for p in raw_persons:
+        crew_id = p.get("crew_id_number") or p.get("id_number")
+        if crew_id:  
+            p["crew_id"] = crew_id
+            p["full_name"] = p.get("full_name") or f"{p.get('first_name', '')} {p.get('last_name', '')}".strip()
+            persons.append(p)
+
     return render(request, 'home.html', {'persons': persons})
 
 @login_required
 def person_detail(request, crew_id):
-    person = db.persons.find_one({"crew_id_number": crew_id})
+    try:
+        person = db.persons.find_one({
+            "$or": [
+                {"crew_id_number": crew_id},
+                {"id_number": crew_id}
+            ]
+        })
 
-    if not person:
-        return render(request, '404.html', status=404)
+        if not person:
+            logger.warning(f"No person found for crew_id or id_number: {crew_id}")
+            return render(request, '404.html', status=404)
 
-    id_card_images = [
+        person_obj = Person.objects.filter(
+            crew_id_number=crew_id
+        ).first() or Person.objects.filter(
+            id_number=crew_id
+        ).first()
+
+        id_card_images = [
         img for img in person.get("images", [])
         if img.get("type") == "ID_CARD_FRONT"
     ]
 
-    return render(request, 'detail.html', {
-        'person': person,
-        'id_card_images': id_card_images
-    })
+        return render(request, 'detail.html', {
+            'person': person,
+            'id_card_images': id_card_images
+        })
+
+    except Exception as e:
+        logger.error(f"Error retrieving person details for {crew_id}: {e}")
+        return render(request, 'detail.html', status=404)
 
 @login_required
 def update_image(request, image_name):
